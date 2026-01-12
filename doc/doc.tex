@@ -1,0 +1,52 @@
+% This is samplepaper.tex, a sample chapter demonstrating the
+% LLNCS macro package for Springer Computer Science proceedings;
+% Version 2.21 of 2022/01/12
+%
+\documentclass[runningheads]{llncs}
+%
+\usepackage[T1]{fontenc}
+% T1 fonts will be used to generate the final print and online PDFs,
+% so please use T1 fonts in your manuscript whenever possible.
+% Other font encondings may result in incorrect characters.
+%
+\usepackage{graphicx}
+\usepackage{amssymb}
+% Used for displaying a sample figure. If possible, figure files should
+% be included in EPS format.
+%
+% If you use the hyperref package, please uncomment the following two lines
+% to display URLs in blue roman font according to Springer's eBook style:
+%\usepackage{color}
+%\renewcommand\UrlFont{\color{blue}\rmfamily}
+%\urlstyle{rm}
+%
+\begin{document}
+	
+	\title{Accurate River Flow Forecasting: The Basin of the River ... }
+	%
+	\titlerunning{Accurate River Forecasting }
+	
+	
+	
+	\author{XX}
+	
+	
+	\section{Ideas: conceptualization}
+	
+	\begin{itemize}
+		\item Obavezno:
+		
+		Rolling-origin evaluation --	Train: 1961–1990 $\rightarrow$ Test: 1991 ... Pomjeraš prozor
+		\item Uzeti jedan sliv (npr. Doboj); Napraviti clean dataframe + lag features; Postaviti rolling validation;  Uporediti: Naive, 	Linear, XGBoost 
+	\end{itemize}
+	
+	TODO: Pretvori sve fajlove u long-format. Spoji ih u jedan master dataframe. Ja ti onda:
+	
+	napišem lag-feature generator
+	
+	postavim rolling validation
+	
+	ubacim NSE/KGE
+	
+	uporedim Naive vs Ridge vs XGBoost
+\end{document}
