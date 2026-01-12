@@ -6,6 +6,15 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.linear_model import LinearRegression
 
 
+def kge(y_true, y_pred):
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    
+    r = np.corrcoef(y_true, y_pred)[0,1]                  # correlation
+    beta = np.mean(y_pred) / np.mean(y_true)             # bias ratio
+    gamma = (np.std(y_pred)/np.mean(y_pred)) / (np.std(y_true)/np.mean(y_true))  # variability ratio
+    return 1 - np.sqrt((r-1)**2 + (beta-1)**2 + (gamma-1)**2)
+
 def add_lag_features(df, lags_P=[1,2,3], lags_T=[1,2], lag_Q=1):
     df = df.copy()
 
@@ -107,7 +116,9 @@ def run_xgboost_forecast_with_lags(df, target_col="Q_proticaj",
     metrics = {
         "RMSE": np.sqrt(mean_squared_error(y_test, y_pred_corr)),
         "MAE":  mean_absolute_error(y_test, y_pred_corr),
-        "NSE":  nse(y_test.values, y_pred_corr)
+        "NSE":  nse(y_test.values, y_pred_corr),
+        "KGE":  kge(y_test.values, y_pred_corr)
+
     }
 
     print("\nFORECAST METRICS (1-step ahead)")
@@ -282,5 +293,4 @@ df_merged = reduce(
 )
 print(df_merged)
 
-
-y_pred_corr, metrics = run_xgboost_forecast_with_lags(df_merged)#run_xgboost_with_linear_scaling(df_merged)
+y_pred_corr, metrics = run_xgboost_forecast_with_lags(df_merged)    #run_xgboost_with_linear_scaling(df_merged)
