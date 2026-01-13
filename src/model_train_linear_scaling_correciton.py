@@ -116,8 +116,8 @@ def run_xgboost_forecast_with_lags(df, target_col="Q_proticaj",
     metrics = {
         "RMSE": np.sqrt(mean_squared_error(y_test, y_pred_corr)),
         "MAE":  mean_absolute_error(y_test, y_pred_corr),
-        "NSE":  nse(y_test.values, y_pred_corr),
-        "KGE":  kge(y_test.values, y_pred_corr)
+        "NSE":  nse(y_test, y_pred_corr),
+        "KGE":  kge(y_test, y_pred_corr)
 
     }
 
@@ -245,7 +245,7 @@ def run_xgboost_with_linear_scaling(df, target_col="Q_proticaj", max_train_year=
 
 
 from convert import convert_data
-
+import time 
 from xgboost import XGBRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from functools import reduce
@@ -271,6 +271,15 @@ temp_bjelasnica = convert_data("temp-bjelasnica.ods", prefix="T")
 
 proticaj = convert_data("proticaj-proticaj.ods", prefix="Q")
 
+# NAN VALUES TREATING  temp_zenica Climatological Monthly Mean Filling (BEST for 6-month gap)
+temp_zenica['date'] = pd.to_datetime(temp_zenica['date'])
+temp_zenica = temp_zenica.set_index('date')
+
+temp_zenica['month'] = temp_zenica.index.month
+monthly_mean = temp_zenica.groupby('month')['T_zenica'].mean()
+
+mask = (temp_zenica.index >= '2017-07-01') & (temp_zenica.index <= '2017-12-01')
+temp_zenica.loc[mask, 'T_zenica'] = temp_zenica.loc[mask].index.month.map(monthly_mean)
 
 #merge data: 
 dfs = [

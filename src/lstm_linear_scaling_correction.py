@@ -50,7 +50,7 @@ def add_lag_features(df, lags_P=[1,2,3], lags_T=[1,2], lag_Q=1):
 # ================================
 def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
                                 max_train_year=2010, test_start_year=2011,
-                                lstm_units=100, epochs=2000, batch_size=32):
+                                lstm_units=100, epochs=1000, batch_size=32):
 
     # 0) Ensure datetime index
     if "date" in df.columns:
@@ -114,7 +114,7 @@ def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
         "RMSE": np.sqrt(mean_squared_error(y_test, y_pred_corr)),
         "MAE":  mean_absolute_error(y_test, y_pred_corr),
         "NSE":  nse(y_test, y_pred_corr),
-        "KGE":  kge(y_test.values, y_pred_corr)
+        "KGE":  kge(y_test, y_pred_corr)
 
     }
 
@@ -154,6 +154,17 @@ temp_bjelasnica = convert_data("temp-bjelasnica.ods", prefix="T")
 
 # -- proticaj --
 proticaj = convert_data("proticaj-proticaj.ods", prefix="Q")
+
+# NAN VALUES TREATING  temp_zenica Climatological Monthly Mean Filling (BEST for 6-month gap)
+temp_zenica['date'] = pd.to_datetime(temp_zenica['date'])
+temp_zenica = temp_zenica.set_index('date')
+
+temp_zenica['month'] = temp_zenica.index.month
+monthly_mean = temp_zenica.groupby('month')['T_zenica'].mean()
+
+mask = (temp_zenica.index >= '2017-07-01') & (temp_zenica.index <= '2017-12-01')
+temp_zenica.loc[mask, 'T_zenica'] = temp_zenica.loc[mask].index.month.map(monthly_mean)
+
 
 # Merge data
 dfs = [

@@ -6,13 +6,13 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.linear_model import LinearRegression
 from functools import reduce
 from convert import convert_data  # assuming your convert_data function exists
-
-
+  
+#do a function for kge metric
 def kge(y_true, y_pred):
     y_true = np.array(y_true)
     y_pred = np.array(y_pred)
     
-    r = np.corrcoef(y_true, y_pred)[0,1]                  # correlation
+    r = np.corrcoef(y_true, y_pred)[0,1]                 # correlation
     beta = np.mean(y_pred) / np.mean(y_true)             # bias ratio
     gamma = (np.std(y_pred)/np.mean(y_pred)) / (np.std(y_true)/np.mean(y_true))  # variability ratio
     return 1 - np.sqrt((r-1)**2 + (beta-1)**2 + (gamma-1)**2)
@@ -97,8 +97,8 @@ def run_rf_forecast_with_lags(df, target_col="Q_proticaj",
     metrics = {
         "RMSE": np.sqrt(mean_squared_error(y_test, y_pred_corr)),
         "MAE":  mean_absolute_error(y_test, y_pred_corr),
-        "NSE":  nse(y_test.values, y_pred_corr),
-        "KGE":  kge(y_test.values, y_pred_corr)
+        "NSE":  nse(y_test, y_pred_corr),
+        "KGE":  kge(y_test, y_pred_corr)
     }
 
     print("\nFORECAST METRICS (1-step ahead)")
@@ -148,6 +148,16 @@ temp_bjelasnica = convert_data("temp-bjelasnica.ods", prefix="T")
 
 # -- proticaj --
 proticaj = convert_data("proticaj-proticaj.ods", prefix="Q")
+
+# NAN VALUES TREATING  temp_zenica Climatological Monthly Mean Filling (BEST for 6-month gap)
+temp_zenica['date'] = pd.to_datetime(temp_zenica['date'])
+temp_zenica = temp_zenica.set_index('date')
+
+temp_zenica['month'] = temp_zenica.index.month
+monthly_mean = temp_zenica.groupby('month')['T_zenica'].mean()
+
+mask = (temp_zenica.index >= '2017-07-01') & (temp_zenica.index <= '2017-12-01')
+temp_zenica.loc[mask, 'T_zenica'] = temp_zenica.loc[mask].index.month.map(monthly_mean)
 
 # Merge data
 dfs = [
