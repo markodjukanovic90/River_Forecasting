@@ -44,13 +44,59 @@ def add_lag_features(df, lags_P=[1,2,3], lags_T=[1,2], lag_Q=1):
 
     return df
 
+# Metrics
+def nse(y_true, y_hat):
+    return 1 - np.sum((y_true - y_hat)**2) / np.sum((y_true - y_true.mean())**2)
+
+
+def permutation_importance_lstm(
+        model, X, y, feature_names,
+        metric_fn, n_repeats=5, random_state=42):
+
+    rng = np.random.default_rng(random_state)
+
+    # force contiguous array
+    X = np.ascontiguousarray(X, dtype=np.float32)
+
+    # convert ONCE to tensor (critical)
+    X_tf = tf.convert_to_tensor(X)
+
+    # baseline prediction (NO model.predict)
+    y_pred = model(X_tf, training=False).numpy().flatten()
+    baseline = metric_fn(y, y_pred)
+
+    importances = []
+
+    for i, name in enumerate(feature_names):
+        scores = []
+
+        for _ in range(n_repeats):
+            X_perm = X.copy()
+
+            perm_idx = rng.permutation(X_perm.shape[0])
+            X_perm[:, :, i] = X_perm[perm_idx, :, i]
+
+            X_perm_tf = tf.convert_to_tensor(X_perm)
+
+            y_perm_pred = model(X_perm_tf, training=False).numpy().flatten()
+            score = metric_fn(y, y_perm_pred)
+
+            scores.append(baseline - score)
+
+        importances.append((name, np.mean(scores)))
+
+    return (
+        pd.DataFrame(importances, columns=["feature", "importance"])
+        .sort_values("importance", ascending=False)
+    )
+
 
 # ================================
 # 2) LSTM forecast function
 # ================================
 def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
                                 max_train_year=2010, test_start_year=2011,
-                                lstm_units=100, epochs=1000, batch_size=32):
+                                lstm_units=100, epochs=512, batch_size=32): # 128 epochs and batch_size=16 1..50
 
     # 0) Ensure datetime index
     if "date" in df.columns:
@@ -71,32 +117,38 @@ def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
 
     # 2) Feature / target
     X = df.drop(columns=[target_col]).values
-    y = df[target_col].values
+    y = df[target_col]
 
-    # 3) Train / test split
+    # 3) Train / test split 
     train_idx = df.index.year <= max_train_year
     test_idx  = df.index.year >= test_start_year
 
     X_train, y_train = X[train_idx], y[train_idx]
     X_test,  y_test  = X[test_idx],  y[test_idx]
 
+    y_train = y.loc[train_idx]
+    y_test  = y.loc[test_idx]
+
+    
+    # To quantify overfitting, we employed 5-fold cross-validation on the training set during hyperparameter tuning.
+        
     # 4) Reshape for LSTM: [samples, timesteps=1, features]
     X_train_lstm = X_train.reshape((X_train.shape[0], 1, X_train.shape[1]))
     X_test_lstm  = X_test.reshape((X_test.shape[0], 1, X_test.shape[1]))
 
     # 5) Build LSTM model
-    model = Sequential([
+    model1 = Sequential([
         LSTM(lstm_units, input_shape=(X_train_lstm.shape[1], X_train_lstm.shape[2])),
         Dense(1)
     ])
-    model.compile(optimizer='adam', loss='mse')
+    model1.compile(optimizer='adam', loss='mse')
 
     # 6) Train
-    model.fit(X_train_lstm, y_train, epochs=epochs, batch_size=batch_size, verbose=1)
+    model1.fit(X_train_lstm, y_train, epochs=epochs, batch_size=batch_size, verbose=1)
 
     # 7) Predict
-    y_pred = model.predict(X_test_lstm).flatten()
-    y_train_pred = model.predict(X_train_lstm).flatten()
+    y_pred = model1.predict(X_test_lstm).flatten()
+    y_train_pred = model1.predict(X_train_lstm).flatten()
 
     # 8) Linear-scaling bias correction
     scaler = LinearRegression()
@@ -106,9 +158,6 @@ def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
 
     y_pred_corr = a * y_pred + b
 
-    # 9) Metrics
-    def nse(y_true, y_hat):
-        return 1 - np.sum((y_true - y_hat)**2) / np.sum((y_true - y_true.mean())**2)
 
     metrics = {
         "RMSE": np.sqrt(mean_squared_error(y_test, y_pred_corr)),
@@ -123,13 +172,43 @@ def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
         print(f"{k}: {v:.3f}")
 
     # 10) Plot
+    # Correct test dates
+    test_dates = df.index[test_idx]
+
     plt.figure(figsize=(10,5))
-    plt.plot(df.index[test_idx], y_test, label="Observed")
-    plt.plot(df.index[test_idx], y_pred_corr, label="Forecast (bias-corrected)")
+    plt.plot(test_dates, y_test, label="Observed", marker='o')
+    plt.plot(test_dates, y_pred, label="LSTM Raw", marker='x')
+    plt.plot(test_dates, y_pred_corr, label="LSTM + Linear-Scaling", marker='s')
+    plt.title("Observed vs Predicted Monthly Flow – River Bosna")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.show()
+    plt.savefig("lstm_forecast_test_period.png", dpi=300)
+    plt.close()
+
+    # feature importance using permutation importance
+    
+    feature_names = df.drop(columns=[target_col]).columns
+
+    fi = permutation_importance_lstm(
+        model=model1,
+        X=X_test_lstm,         # ✅ 3D (samples, 1, features)
+        y=y_test,
+        feature_names=feature_names,
+        metric_fn=nse,
+        n_repeats=5
+    )
+
+    plt.barh(fi["feature"], fi["importance"])
+    plt.gca().invert_yaxis()
+    plt.xlabel("NSE decrease after permutation")
+    plt.title("LSTM Permutation Feature Importance")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig("feature_importance_lstm.png", dpi=300)
+    plt.close()
+   
+
 
     return y_pred_corr, metrics
 
