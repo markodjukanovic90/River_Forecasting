@@ -128,108 +128,8 @@ def run_xgboost_forecast_with_lags(df, target_col="Q_proticaj",
     # -------------------------------------------------
     # 8) Plot
     # -------------------------------------------------
-    plt.figure(figsize=(10,5))
-    plt.plot(y_test.index, y_test, label="Observed")
-    plt.plot(y_test.index, y_pred_corr, label="Forecast (bias-corrected)")
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
-
-    return y_pred_corr, metrics
-
-
-
-def run_xgboost_with_linear_scaling(df, target_col="Q_proticaj", max_train_year=2010, test_start_year=2011):
-    """
-    Run XGBoost on monthly hydrological data with linear-scaling bias correction.
-
-    Args:
-        df (pd.DataFrame): DataFrame with datetime index and features including target_col.
-        target_col (str): Column name of target (e.g., river flow).
-        max_train_year (int): Maximum year for training period.
-        test_start_year (int): Start year of test period.
-
-    Returns:
-        y_pred_corrected (np.array): Bias-corrected predictions.
-        metrics (dict): RMSE, MAE, NSE.
-    """
-    
-    if "date" in df.columns:
-        df = df.copy()
-        df["date"] = pd.to_datetime(df["date"])
-        df = df.set_index("date")
-
-    if not isinstance(df.index, pd.DatetimeIndex):
-        raise ValueError("DataFrame must have a DatetimeIndex or a 'date' column")
-
-    df = df.sort_index()
-
-    # 1) Feature/target
-    X = df.drop(columns=[target_col])
-    y = df[target_col]
-
-    # -------------------------------------------------
-    # 2) Train / Test split (NOW SAFE)
-    # -------------------------------------------------
-    train_idx = df.index.year <= max_train_year
-    test_idx  = df.index.year >= test_start_year
-    
-
-    X_train, y_train = X.loc[train_idx], y.loc[train_idx]
-    X_test, y_test   = X.loc[test_idx],  y.loc[test_idx]
-
-    # 3) XGBoost model
-    model = XGBRegressor(
-        n_estimators=600,
-        max_depth=4,
-        learning_rate=0.03,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        objective="reg:squarederror",
-        random_state=42
-    )
-    model.fit(X_train, y_train)
-
-    # 4) Raw predictions
-    y_pred = model.predict(X_test)
-
-    # 5) Linear-scaling bias correction
-    scaler = LinearRegression()
-    scaler.fit(model.predict(X_train).reshape(-1,1), y_train.values)
-    a, b = scaler.coef_[0], scaler.intercept_
-    print(f"Linear-scaling coefficients: a={a:.3f}, b={b:.3f}")
-
-    y_pred_corrected = a * y_pred + b
-
-    # 6) Metrics
-    def nse(y_true, y_pred):
-        return 1 - np.sum((y_true - y_pred)**2) / np.sum((y_true - y_true.mean())**2)
-
-    metrics = {
-        "RMSE": np.sqrt(mean_squared_error(y_test, y_pred_corrected)),
-        "MAE" : mean_absolute_error(y_test, y_pred_corrected),
-        "NSE" : nse(y_test.values, y_pred_corrected)
-    }
-
-    print("\nFINAL TEST METRICS (After Linear-Scaling):")
-    for k,v in metrics.items():
-        print(f"{k}: {v:.3f}")
-
-    # 7) Plots
-    plt.figure(figsize=(10,5))
-    plt.plot(y_test.index, y_test.values, label="Observed", marker='o')
-    plt.plot(y_test.index, y_pred, label="XGBoost Raw", marker='x')
-    plt.plot(y_test.index, y_pred_corrected, label="XGBoost + Linear-Scaling", marker='s')
-    plt.title("Observed vs Predicted Monthly Flow – River Bosna")
-    plt.xlabel("Date")
-    plt.ylabel("Flow (m³/s)")
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
-
     # Feature importance plot (top 5)
+    print("Plotting feature importances...")
     imp = pd.Series(model.feature_importances_, index=X.columns)
     top_imp = imp.sort_values(ascending=True).tail(5)
     plt.figure(figsize=(8,5))
@@ -238,9 +138,24 @@ def run_xgboost_with_linear_scaling(df, target_col="Q_proticaj", max_train_year=
     plt.xlabel("Importance")
     plt.ylabel("Feature")
     plt.tight_layout()
-    plt.show()
+    plt.savefig("feature_importance_xgboost.png", dpi=300)
+    #plt.close()
 
-    return y_pred_corrected, metrics
+    # Observed vs Predicted plot
+    plt.figure(figsize=(10,5))
+    plt.plot(y_test.index, y_test.values, label="Observed", marker='o')
+    plt.plot(y_test.index, y_pred, label="XGBoost Raw", marker='x')
+    plt.plot(y_test.index, y_pred_corr, label="XGBoost + Linear-Scaling", marker='s')
+    plt.title("Observed vs Predicted Monthly Flow – River Bosna")
+    plt.xlabel("Date")
+    plt.ylabel("Flow (m³/s)")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig("xgboost_forecast_test_period.png", dpi=300)
+    #plt.close()
+
+    return y_pred_corr, metrics
 
 
 

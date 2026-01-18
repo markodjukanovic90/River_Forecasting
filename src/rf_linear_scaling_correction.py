@@ -107,12 +107,15 @@ def run_rf_forecast_with_lags(df, target_col="Q_proticaj",
 
     # 8) Plot
     plt.figure(figsize=(10,5))
-    plt.plot(y_test.index, y_test, label="Observed")
-    plt.plot(y_test.index, y_pred_corr, label="Forecast (bias-corrected)")
+    plt.plot(y_test.index, y_test.values, label="Observed", marker='o')
+    plt.plot(y_test.index, y_pred, label="RF Raw", marker='x')
+    plt.plot(y_test.index, y_pred_corr, label="RF + Linear-Scaling", marker='s')
+    plt.title("Observed vs Predicted Monthly Flow – River Bosna")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.show()
+    plt.savefig("rf_forecast_test_period.png", dpi=300)
+    #plt.close()
 
     # Feature importance plot (top 5)
     imp = pd.Series(model.feature_importances_, index=X.columns)
@@ -123,8 +126,8 @@ def run_rf_forecast_with_lags(df, target_col="Q_proticaj",
     plt.xlabel("Importance")
     plt.ylabel("Feature")
     plt.tight_layout()
-    plt.show()
-
+    plt.savefig("feature_importance_rf.png", dpi=300)
+    #plt.close()
     return y_pred_corr, metrics
 
 
