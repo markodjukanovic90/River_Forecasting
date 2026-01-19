@@ -1,5 +1,5 @@
 # ============================================================
-# XGBoost hydrological forecasting with
+# Random Forest hydrological forecasting with
 # GridSearchCV + NSE + TimeSeriesSplit
 # ============================================================
 
@@ -7,13 +7,13 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from xgboost import XGBRegressor
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 from sklearn.metrics import mean_squared_error, mean_absolute_error, make_scorer
 from sklearn.linear_model import LinearRegression
 from functools import reduce
 
-from convert import convert_data
+from convert import convert_data   # assumed to exist
 
 
 # ------------------------------------------------------------
@@ -31,7 +31,7 @@ def kge(y_true, y_pred):
 
     r = np.corrcoef(y_true, y_pred)[0, 1]
     beta = np.mean(y_pred) / np.mean(y_true)
-    gamma = (np.std(y_pred)/np.mean(y_pred)) / (np.std(y_true)/np.mean(y_true))
+    gamma = (np.std(y_pred) / np.mean(y_pred)) / (np.std(y_true) / np.mean(y_true))
 
     return 1 - np.sqrt((r - 1)**2 + (beta - 1)**2 + (gamma - 1)**2)
 
@@ -40,7 +40,7 @@ nse_scorer = make_scorer(nse, greater_is_better=True)
 
 
 # ------------------------------------------------------------
-# Lag features
+# Lagged features
 # ------------------------------------------------------------
 def add_lag_features(df, lags_P=[1,2,3], lags_T=[1,2], lag_Q=1):
     df = df.copy()
@@ -63,12 +63,12 @@ def add_lag_features(df, lags_P=[1,2,3], lags_T=[1,2], lag_Q=1):
 
 
 # ------------------------------------------------------------
-# Main XGBoost forecast with Grid Search
+# Main RF forecast with Grid Search
 # ------------------------------------------------------------
-def run_xgboost_forecast_with_lags(df,
-                                   target_col="Q_proticaj",
-                                   max_train_year=2010,
-                                   test_start_year=2011):
+def run_rf_forecast_with_lags(df,
+                              target_col="Q_proticaj",
+                              max_train_year=2010,
+                              test_start_year=2011):
 
     # ---- datetime index ----
     if "date" in df.columns:
@@ -96,24 +96,23 @@ def run_xgboost_forecast_with_lags(df,
     # --------------------------------------------------------
     # Grid Search with TimeSeriesSplit
     # --------------------------------------------------------
-    xgb = XGBRegressor(
-        objective="reg:squarederror",
+    rf = RandomForestRegressor(
         random_state=42,
         n_jobs=-1
     )
 
     param_grid = {
-        "n_estimators": [300, 600, 1000],
-        "max_depth": [3, 4, 6],
-        "learning_rate": [0.01, 0.03, 0.05],
-        "subsample": [0.7, 0.8, 1.0],
-        "colsample_bytree": [0.7, 0.8, 1.0]
+        "n_estimators": [500, 1000, 2000],
+        "max_depth": [None, 10, 20, 30],
+        "min_samples_split": [2, 5, 10],
+        "min_samples_leaf": [1, 2, 4],
+        "max_features": ["sqrt", "log2"]
     }
 
     tscv = TimeSeriesSplit(n_splits=5)
 
     grid = GridSearchCV(
-        estimator=xgb,
+        estimator=rf,
         param_grid=param_grid,
         scoring=nse_scorer,
         cv=tscv,
@@ -131,7 +130,7 @@ def run_xgboost_forecast_with_lags(df,
         print(f"  {k}: {v}")
 
     # --------------------------------------------------------
-    # Prediction (1-step-ahead)
+    # Prediction (1-step ahead)
     # --------------------------------------------------------
     y_pred = model.predict(X_test)
 
@@ -159,6 +158,19 @@ def run_xgboost_forecast_with_lags(df,
         print(f"{k}: {v:.3f}")
 
     # --------------------------------------------------------
+    # Plot hydrograph
+    # --------------------------------------------------------
+    plt.figure(figsize=(10, 5))
+    plt.plot(y_test.index, y_test.values, label="Observed", marker="o")
+    plt.plot(y_test.index, y_pred, label="RF raw", marker="x")
+    plt.plot(y_test.index, y_pred_corr, label="RF + Linear scaling", marker="s")
+    plt.title("Observed vs Predicted Monthly Flow – River Bosna")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig("gs_rf_forecast_test_period.png", dpi=300)
+
+    # --------------------------------------------------------
     # Feature importance
     # --------------------------------------------------------
     imp = pd.Series(model.feature_importances_, index=X.columns)
@@ -166,29 +178,16 @@ def run_xgboost_forecast_with_lags(df,
 
     plt.figure(figsize=(8, 5))
     top_imp.plot(kind="barh")
-    plt.title("Top 5 Feature Importances – XGBoost")
+    plt.title("Top 5 Feature Importances – Random Forest")
     plt.xlabel("Importance")
     plt.tight_layout()
-    plt.savefig("gs_feature_importance_xgboost.png", dpi=300)
-
-    # --------------------------------------------------------
-    # Hydrograph plot
-    # --------------------------------------------------------
-    plt.figure(figsize=(10, 5))
-    plt.plot(y_test.index, y_test.values, label="Observed", marker="o")
-    plt.plot(y_test.index, y_pred, label="XGBoost raw", marker="x")
-    plt.plot(y_test.index, y_pred_corr, label="XGBoost + Linear scaling", marker="s")
-    plt.title("Observed vs Predicted Monthly Flow – River Bosna")
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig("gs_xgboost_forecast_test_period.png", dpi=300)
+    plt.savefig("gs_feature_importance_rf.png", dpi=300)
 
     return y_pred_corr, metrics
 
 
 # ============================================================
-# DATA LOADING & MERGING (unchanged)
+# DATA LOADING & MERGING (unchanged logic)
 # ============================================================
 
 padavine_doboj = convert_data("padavine-doboj.ods")
@@ -205,6 +204,7 @@ temp_bjelasnica = convert_data("temp-bjelasnica.ods", prefix="T")
 
 proticaj = convert_data("proticaj-proticaj.ods", prefix="Q")
 
+# ---- climatological filling ----
 temp_zenica["date"] = pd.to_datetime(temp_zenica["date"])
 temp_zenica = temp_zenica.set_index("date")
 
@@ -214,6 +214,7 @@ monthly_mean = temp_zenica.groupby("month")["T_zenica"].mean()
 mask = (temp_zenica.index >= "2017-07-01") & (temp_zenica.index <= "2017-12-01")
 temp_zenica.loc[mask, "T_zenica"] = temp_zenica.loc[mask].index.month.map(monthly_mean)
 
+# ---- merge ----
 dfs = [
     padavine_doboj, padavine_tuzla, padavine_zenica,
     padavine_sarajevo, padavine_bjelasnica,
@@ -227,5 +228,5 @@ df_merged = reduce(lambda l, r: pd.merge(l, r, on="date", how="inner"), dfs)
 # ============================================================
 # RUN MODEL
 # ============================================================
-y_pred_corr, metrics = run_xgboost_forecast_with_lags(df_merged)
+y_pred_corr, metrics = run_rf_forecast_with_lags(df_merged)
 

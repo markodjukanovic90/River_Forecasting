@@ -9,6 +9,7 @@ from convert import convert_data
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.optimizers import Adam
 
 def kge(y_true, y_pred):
     y_true = np.array(y_true)
@@ -92,11 +93,12 @@ def permutation_importance_lstm(
 
 
 # ================================
-# 2) LSTM forecast function
+# 2) LSTM forecast function {'units': 64.0, 'lr': 0.001, 'batch_size': 16.0, 'epochs': 200.0, 'NSE': -0.24096352023289008}
+
 # ================================
 def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
                                 max_train_year=2010, test_start_year=2011,
-                                lstm_units=100, epochs=512, batch_size=32): # 128 epochs and batch_size=16 1..50
+                                lstm_units=64, epochs=200, batch_size=16, lr = 0.001 ): # 128 epochs and batch_size=16 1..50
 
     # 0) Ensure datetime index
     if "date" in df.columns:
@@ -128,9 +130,6 @@ def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
 
     y_train = y.loc[train_idx]
     y_test  = y.loc[test_idx]
-
-    
-    # To quantify overfitting, we employed 5-fold cross-validation on the training set during hyperparameter tuning.
         
     # 4) Reshape for LSTM: [samples, timesteps=1, features]
     X_train_lstm = X_train.reshape((X_train.shape[0], 1, X_train.shape[1]))
@@ -140,8 +139,9 @@ def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
     model1 = Sequential([
         LSTM(lstm_units, input_shape=(X_train_lstm.shape[1], X_train_lstm.shape[2])),
         Dense(1)
-    ])
-    model1.compile(optimizer='adam', loss='mse')
+    ]) 
+    optimizer = Adam(learning_rate=lr)  # <-- set your LR here
+    model1.compile(optimizer=optimizer, loss='mse')
 
     # 6) Train
     model1.fit(X_train_lstm, y_train, epochs=epochs, batch_size=batch_size, verbose=1)
