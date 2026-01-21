@@ -1,4 +1,4 @@
-XGBOOST parameters:
+XGBOOST parameters: (5-fold validation)
 
 Best CV NSE: 0.7361268777103086
 Best parameters:
@@ -35,7 +35,6 @@ RMSE: 66.426
 MAE: 50.464
 NSE: 0.566
 KGE: 0.533
-
 
 -----------------------------------------------------------------
 
