@@ -157,7 +157,20 @@ def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
     print(f"Linear-scaling: a={a:.3f}, b={b:.3f}")
 
     y_pred_corr = a * y_pred + b
+    
+    
+    
+    metrics_train = {
+        "RMSE": np.sqrt(mean_squared_error(y_train,  y_train_pred)),
+        "MAE":  mean_absolute_error( y_train, y_train_pred ),
+        "NSE":  nse( y_train,   y_train_pred),
+        "KGE":  kge( y_train, y_train_pred)
 
+    }
+
+    print("\nTRAIN DATA ACCURACY: ")
+    for k,v in metrics_train.items():
+        print(f"{k}: {v:.3f}")
 
     metrics = {
         "RMSE": np.sqrt(mean_squared_error(y_test, y_pred_corr)),
@@ -188,27 +201,71 @@ def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
 
     # feature importance using permutation importance
     
+
+    # =====================================================
+    # TOP-5 PERMUTATION IMPORTANCE WITH DIRECTION (LSTM)
+    # =====================================================
+
     feature_names = df.drop(columns=[target_col]).columns
 
+    # --- Permutation importance (magnitude)
     fi = permutation_importance_lstm(
         model=model1,
-        X=X_test_lstm,         # ✅ 3D (samples, 1, features)
+        X=X_test_lstm,
         y=y_test,
         feature_names=feature_names,
         metric_fn=nse,
         n_repeats=5
     )
 
-    plt.barh(fi["feature"], fi["importance"])
+    # --- Keep only top 5 most influential features
+    fi = fi.sort_values("importance", ascending=False).head(5).copy()
+
+    # -----------------------------------------------------
+    # Compute DIRECTION of influence
+    # -----------------------------------------------------
+    directions = []
+
+    base_pred = model1.predict(X_test_lstm).flatten()
+
+    for feat in fi["feature"]:
+        idx = feature_names.get_loc(feat)
+
+        X_perturbed = X_test_lstm.copy()
+        delta = np.std(X_test_lstm[:, :, idx])
+
+        # positive perturbation
+        X_perturbed[:, :, idx] += delta
+        pert_pred = model1.predict(X_perturbed).flatten()
+    
+        # direction: +1 (positive), -1 (negative)
+        direction = np.sign(np.mean(pert_pred - base_pred))
+        directions.append(direction)
+
+    fi["direction"] = directions
+
+    # -----------------------------------------------------
+    # Plot: magnitude (NSE decrease) + direction (color)
+    # -----------------------------------------------------
+
+    colors = fi["direction"].apply(
+        lambda d: "green" if d > 0 else "red"
+    )
+
+    plt.figure(figsize=(7,4))
+    plt.barh(
+        fi["feature"],
+        fi["importance"],
+        color=colors
+    )
+
     plt.gca().invert_yaxis()
     plt.xlabel("NSE decrease after permutation")
-    plt.title("LSTM Permutation Feature Importance")
-    plt.grid(True)
+    plt.title("Top-5 Features: LSTM ")
+    plt.grid(True, axis="x")
     plt.tight_layout()
     plt.savefig("feature_importance_lstm.png", dpi=300)
     plt.close()
-   
-
 
     return y_pred_corr, metrics
 

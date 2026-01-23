@@ -113,6 +113,21 @@ def run_xgboost_forecast_with_lags(df, target_col="Q_proticaj",
     def nse(y_true, y_hat):
         return 1 - np.sum((y_true - y_hat)**2) / np.sum((y_true - y_true.mean())**2)
 
+    
+    metrics_train = {
+        "RMSE": np.sqrt(mean_squared_error(y_train, model.predict(X_train))),
+        "MAE":  mean_absolute_error( y_train, model.predict(X_train) ),
+        "NSE":  nse( y_train, model.predict(X_train) ),
+        "KGE":  kge( y_train, model.predict(X_train) )
+
+    }
+    
+    print("\nTRAIN DATA ACCURACY: ")
+    for k,v in metrics_train.items():
+        print(f"{k}: {v:.3f}")
+    
+    
+    
     metrics = {
         "RMSE": np.sqrt(mean_squared_error(y_test, y_pred_corr)),
         "MAE":  mean_absolute_error(y_test, y_pred_corr),
@@ -221,7 +236,7 @@ def run_xgboost_with_linear_scaling(df, target_col="Q_proticaj", max_train_year=
     plt.plot(y_test.index, y_test.values, label="Observed", marker='o')
     plt.plot(y_test.index, y_pred, label="XGBoost Raw", marker='x')
     plt.plot(y_test.index, y_pred_corrected, label="XGBoost + Linear-Scaling", marker='s')
-    plt.title("Observed vs Predicted Monthly Flow – River Bosna")
+    plt.title("Observed vs Predicted Monthly Flow: River Bosna")
     plt.xlabel("Date")
     plt.ylabel("Flow (m³/s)")
     plt.legend()
@@ -234,11 +249,11 @@ def run_xgboost_with_linear_scaling(df, target_col="Q_proticaj", max_train_year=
     top_imp = imp.sort_values(ascending=True).tail(5)
     plt.figure(figsize=(8,5))
     top_imp.plot(kind="barh", color="skyblue")
-    plt.title("Top 5 Feature Importances – XGBoost")
+    plt.title("Top 5 Feature Importances: XGBoost")
     plt.xlabel("Importance")
     plt.ylabel("Feature")
     plt.tight_layout()
-    plt.show()
+    plt.savefig("feature_importance_xgboost.png", dpi=300)
 
     return y_pred_corrected, metrics
 

@@ -96,6 +96,19 @@ def run_rf_forecast_with_lags(df, target_col="Q_proticaj",
     # 7) Metrics
     def nse(y_true, y_hat):
         return 1 - np.sum((y_true - y_hat)**2) / np.sum((y_true - y_true.mean())**2)
+        
+    
+    metrics_train = {
+        "RMSE": np.sqrt(mean_squared_error(y_train, model.predict(X_train))),
+        "MAE":  mean_absolute_error( y_train, model.predict(X_train) ),
+        "NSE":  nse( y_train, model.predict(X_train) ),
+        "KGE":  kge( y_train, model.predict(X_train) )
+
+    }
+    
+    print("\nTRAIN DATA ACCURACY: ")
+    for k,v in metrics_train.items():
+        print(f"{k}: {v:.3f}")
 
     metrics = {
         "RMSE": np.sqrt(mean_squared_error(y_test, y_pred_corr)),
@@ -125,7 +138,7 @@ def run_rf_forecast_with_lags(df, target_col="Q_proticaj",
     top_imp = imp.sort_values(ascending=True).tail(5)
     plt.figure(figsize=(8,5))
     top_imp.plot(kind="barh", color="skyblue")
-    plt.title("Top 5 Feature Importances – RandomForest")
+    plt.title("Top 5 Feature Importances: RandomForest")
     plt.xlabel("Importance")
     plt.ylabel("Feature")
     plt.tight_layout()

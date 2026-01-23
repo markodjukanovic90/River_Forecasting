@@ -13,13 +13,20 @@ Best parameters:
 
 Linear scaling: a=1.007, b=-1.169
 
-FORECAST METRICS (test period)
+
+TRAIN DATA ACCURACY: 
+RMSE: 2.920
+MAE: 2.208
+NSE: 0.999
+KGE: 0.993
+
+FORECAST METRICS (test data)
 RMSE: 64.680
 MAE: 48.029
-
-
 NSE: 0.589
 KGE: 0.589
+
+----------------------------------------------------
 ---------------------------------------------------
 
 RF parameters:
@@ -34,24 +41,40 @@ Best parameters:
 
 Linear scaling: a=1.131, b=-22.353
 
-FORECAST METRICS (test period)
-RMSE: 66.426
-MAE: 50.464
+TRAIN DATA ACCURACY: 
+RMSE: 20.769
+MAE: 14.888
+NSE: 0.964
+KGE: 0.884
 
-
-NSE: 0.566
-KGE: 0.533
+FORECAST METRICS (1-step ahead)
+RMSE: 64.500
+MAE: 47.169
+NSE: 0.591
+KGE: 0.591
 
 -----------------------------------------------------------------
 
 LSTM
 
 {'units': 64.0, 'lr': 0.001, 'batch_size': 16.0, 'epochs': 200.0, 'NSE': -0.24096352023289008}
+
+Linear-scaling: a=1.898, b=-129.734
+
+
+TRAIN DATA ACCURACY: 
+RMSE: 81.581
+MAE: 57.432
+NSE: 0.443
+KGE: 0.382
+
 FORECAST METRICS (1-step ahead)
-RMSE: 75.958
-MAE: 56.110
-NSE: 0.432
-KGE: 0.478
+RMSE: 75.086
+MAE: 54.763
+NSE: 0.445
+KGE: 0.489
+
+
 
 
 -----------------------------------------------------------
