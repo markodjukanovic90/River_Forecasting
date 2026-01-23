@@ -171,17 +171,40 @@ def run_rf_forecast_with_lags(df,
     plt.savefig("gs_rf_forecast_test_period.png", dpi=300)
 
     # --------------------------------------------------------
-    # Feature importance
+    # Feature importance with direction
     # --------------------------------------------------------
-    imp = pd.Series(model.feature_importances_, index=X.columns)
-    top_imp = imp.sort_values(ascending=True).tail(5)
+    import seaborn as sns
 
-    plt.figure(figsize=(8, 5))
-    top_imp.plot(kind="barh")
-    plt.title("Top 5 Feature Importances – Random Forest")
+    # Feature importance magnitude from model
+    imp = pd.Series(model.feature_importances_, index=X.columns)
+    top_imp = imp.sort_values(ascending=False).head(5)  # top 10 features
+
+    # Compute direction of influence (correlation with predictions)
+    directions = []
+    for f in top_imp.index:
+        corr = np.corrcoef(X_test[f], y_pred_corr)[0, 1]
+        directions.append(corr)
+
+    # Put into DataFrame
+    fi_df = pd.DataFrame({
+        "feature": top_imp.index,
+        "importance": top_imp.values,
+        "direction": directions
+    })  
+
+    # Plot with color indicating direction
+    plt.figure(figsize=(8,5))
+    sns.barplot(
+        x="importance", y="feature", data=fi_df,
+        palette=["green" if d>0 else "red" for d in fi_df["direction"]]
+    )
+    plt.title("Top 5 XGBoost Features – Size=Importance, Color=Direction")
     plt.xlabel("Importance")
+    plt.ylabel("Feature")
     plt.tight_layout()
-    plt.savefig("gs_feature_importance_rf.png", dpi=300)
+    plt.savefig("gs_feature_importance_direction_rf.png", dpi=300)
+    plt.close()
+
 
     return y_pred_corr, metrics
 

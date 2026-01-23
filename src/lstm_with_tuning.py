@@ -116,18 +116,18 @@ def grid_search_lstm(X_train, y_train):
     df_results = pd.DataFrame(results)
     return df_results.sort_values("NSE", ascending=False)
 
-# =====================================================
-# Main LSTM pipeline
-# =====================================================
-def run_lstm_with_nse_tuning(df):
+def run_lstm_with_nse_tuning(df, target_col="Q_proticaj"):
+    import seaborn as sns
+    
     df["date"] = pd.to_datetime(df["date"])
     df = df.set_index("date").sort_index()
 
+    # Add lag features
     df = add_lag_features(df)
     df = df.dropna()
 
-    X = df.drop(columns=["Q_proticaj"]).values
-    y = df["Q_proticaj"].values
+    X = df.drop(columns=[target_col]).values
+    y = df[target_col].values
 
     train_idx = df.index.year <= 2010
     test_idx  = df.index.year >= 2011
@@ -135,11 +135,12 @@ def run_lstm_with_nse_tuning(df):
     X_train, X_test = X[train_idx], X[test_idx]
     y_train, y_test = y[train_idx], y[test_idx]
 
-    X_train = X_train.reshape((X_train.shape[0], 1, X_train.shape[1]))
-    X_test  = X_test.reshape((X_test.shape[0], 1, X_test.shape[1]))
+    # Reshape for LSTM
+    X_train_lstm = X_train.reshape((X_train.shape[0], 1, X_train.shape[1]))
+    X_test_lstm  = X_test.reshape((X_test.shape[0], 1, X_test.shape[1]))
 
     # ================= Grid Search =================
-    gs_results = grid_search_lstm(X_train, y_train)
+    gs_results = grid_search_lstm(X_train_lstm, y_train)
     best = gs_results.iloc[0].to_dict()
 
     print("\nBEST PARAMETERS")
@@ -147,21 +148,21 @@ def run_lstm_with_nse_tuning(df):
 
     # ================= Train Best Model =================
     model = build_lstm(
-        n_features=X_train.shape[2],
+        n_features=X_train_lstm.shape[2],
         units=int(best["units"]),
         lr=best["lr"]
     )
 
     model.fit(
-        X_train, y_train,
+        X_train_lstm, y_train,
         epochs=int(best["epochs"]),
         batch_size=int(best["batch_size"]),
         verbose=1
     )
 
     # ================= Prediction =================
-    y_train_pred = model.predict(X_train).flatten()
-    y_test_pred = model.predict(X_test).flatten()
+    y_train_pred = model.predict(X_train_lstm).flatten()
+    y_test_pred  = model.predict(X_test_lstm).flatten()
 
     # Linear scaling
     scaler = LinearRegression()
@@ -178,15 +179,14 @@ def run_lstm_with_nse_tuning(df):
     print("\nTEST METRICS")
     for k,v in metrics.items():
         print(f"{k}: {v:.3f}")
-        
-    # 10) Plot
-    # Correct test dates
+
+    # ================= Hydrograph plot =================
     test_dates = df.index[test_idx]
 
     plt.figure(figsize=(10,5))
     plt.plot(test_dates, y_test, label="Observed", marker='o')
-    plt.plot(test_dates, y_pred, label="LSTM Raw", marker='x')
-    plt.plot(test_dates, y_pred_corr, label="LSTM + Linear-Scaling", marker='s')
+    plt.plot(test_dates, y_test_pred, label="LSTM Raw", marker='x')
+    plt.plot(test_dates, y_test_corr, label="LSTM + Linear-Scaling", marker='s')
     plt.title("Observed vs Predicted Monthly Flow – River Bosna")
     plt.legend()
     plt.grid(True)
@@ -194,29 +194,46 @@ def run_lstm_with_nse_tuning(df):
     plt.savefig("gs_lstm_forecast_test_period.png", dpi=300)
     plt.close()
 
-    # feature importance using permutation importance
-    
+    # ================= Permutation Feature Importance =================
     feature_names = df.drop(columns=[target_col]).columns
 
     fi = permutation_importance_lstm(
-        model=model1,
-        X=X_test_lstm,         # ✅ 3D (samples, 1, features)
+        model=model,
+        X=X_test_lstm,
         y=y_test,
         feature_names=feature_names,
         metric_fn=nse,
         n_repeats=5
     )
 
-    plt.barh(fi["feature"], fi["importance"])
-    plt.gca().invert_yaxis()
+    # Compute feature direction: correlation between feature and prediction
+    directions = []
+    for i, col in enumerate(feature_names):
+        corr = np.corrcoef(X_test[:, i], y_test_corr.flatten())[0,1]
+        directions.append(corr)
+
+    fi["direction"] = directions
+    fi["color"] = fi["direction"].apply(lambda x: "green" if x >= 0 else "red")
+
+    # Keep only top 5 most important features
+    fi_top5 = fi.sort_values("importance", ascending=False).head(5)
+    fi_top5 = fi_top5.sort_values("importance", ascending=True)  # for nicer horizontal plot
+
+    # Plot
+    plt.figure(figsize=(8,6))
+    sns.barplot(
+        x="importance", 
+        y="feature", 
+        data=fi_top5,
+        palette=fi_top5["color"]
+    )
     plt.xlabel("NSE decrease after permutation")
-    plt.title("LSTM Permutation Feature Importance")
+    plt.ylabel("Feature")
+    plt.title("Top 5 LSTM Feature Importance with Direction")
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("gs_feature_importance_lstm.png", dpi=300)
+    plt.savefig("gs_feature_importance_lstm_top5.png", dpi=300)
     plt.close()
-    
-
     return metrics
 
 # =====================================================

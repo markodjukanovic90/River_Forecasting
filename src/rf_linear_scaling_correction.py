@@ -72,9 +72,12 @@ def run_rf_forecast_with_lags(df, target_col="Q_proticaj",
 
     # 4) RandomForest model
     model = RandomForestRegressor(
+    
         n_estimators=2000,
-        max_depth=None,
+        max_depth=30,
         random_state=42,
+        min_samples_leaf = 1,
+        min_samples_split = 2,
         n_jobs=-1
     )
     model.fit(X_train, y_train)
