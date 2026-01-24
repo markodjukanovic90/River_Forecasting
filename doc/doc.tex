@@ -11,6 +11,8 @@
 %
 \usepackage{graphicx}
 \usepackage{amssymb}
+\usepackage{multirow}
+\usepackage{color}
 % Used for displaying a sample figure. If possible, figure files should
 % be included in EPS format.
 %
@@ -37,9 +39,9 @@
       
       \subsection{Compared Models}
       
-      In this study, three data-driven modeling approaches were evaluated for predicting the monthly mean river discharge (\emph{proticaj}) of the Bosna River: Random Forest (RF), Extreme Gradient Boosting (XGBoost), and Long Short-Term Memory neural networks (LSTM).
+      In this study, three data-driven modeling approaches were evaluated for predicting the monthly mean river discharge (\emph{proticaj}) of the Bosna River: \textit{Random Forest} (RF), \textit{Extreme Gradient Boosting} (XGBoost), and \textit{Long Short-Term Memory }neural networks (LSTM).
       
-      Random Forest is an ensemble learning method based on bootstrap aggregation of decision trees. Due to its robustness to noise, ability to model nonlinear relationships, and limited sensitivity to multicollinearity, RF is frequently applied in hydrological modeling and is considered a strong baseline approach.
+      Random Forest is an ensemble learning method based on bootstrap aggregation of decision trees. Due to its robustness to noise, ability to capture nonlinear relationships, and limited sensitivity to multicollinearity, RF is frequently applied in hydrological modeling and is considered a strong baseline approach.
       
       XGBoost is a gradient boosting framework that sequentially constructs decision trees, where each tree aims to correct the errors of its predecessors. Compared to RF, XGBoost offers enhanced control over model complexity through regularization and learning-rate parameters, and has shown strong performance in hydro-climatic prediction tasks.
       
@@ -51,9 +53,9 @@
       
       The dataset consists of monthly aggregated observations spanning the period from 1961 to 2020. Each record corresponds to a single month.
       
-      Meteorological predictors include the mean monthly precipitation ($P$) and mean monthly air temperature ($T$), observed at five meteorological stations located within the Bosna River basin: Bjelašnica, Sarajevo, Zenica, Tuzla, and Doboj.
+      Meteorological predictors include the mean monthly precipitation ($P$) and mean monthly air temperature ($T$), observed at five meteorological stations located within the Bosna River basin: Bjelašnica, Sarajevo, Zenica, Tuzla, and Doboj. The target variable for prediction is the monthly mean river discharge ($Q$), measured at the basin outlet. All variables were aggregated to monthly resolution to ensure temporal consistency and long-term coverage. 
       
-      The target variable is the monthly mean river discharge ($Q$), measured at the basin outlet. All variables were aggregated to monthly resolution to ensure temporal consistency and long-term coverage.
+      We noticed a few missing data for the Zenica station within a gap of 6 month in 2017. These are properly filled in by applying the Climatological Monthly Mean Filling across all historical data for that station. 
       
       \subsection{Feature Engineering and Lagged Variables}
       
@@ -70,9 +72,8 @@
       
       \subsection{Performance Metrics}
       
-      Model performance was evaluated using hydrologically relevant efficiency metrics.
+      Model performance was evaluated using hydrologically relevant efficiency metrics. Besides Minimum Absolute Error (MAE) and the Root Mean Square Error (RMSE), Nash--Sutcliffe measure, and Kling--Gupta measure are determined. 
       
-      \subsubsection{Nash--Sutcliffe Efficiency}
       
       The Nash--Sutcliffe Efficiency (NSE) measures the predictive skill of a model relative to the mean of observed discharge values and is defined as:
       \begin{equation}
@@ -80,7 +81,6 @@
       \end{equation}
       where $Q_i$ and $\hat{Q}_i$ denote observed and predicted discharge values, respectively, and $\bar{Q}$ is the mean of observed discharge.
       
-      \subsubsection{Kling--Gupta Efficiency}
       
       The Kling--Gupta Efficiency (KGE) decomposes model performance into correlation, bias, and variability components:
       \begin{equation}
@@ -98,11 +98,11 @@
       	\item Testing period: 2011--2020
       \end{itemize}
       
-      Within the training period, rolling-origin cross-validation was implemented using a time-series split with five folds. In this setup, validation sets always occur chronologically after the corresponding training subsets.
+      Within the training period, \textit{rolling-origin cross-validation} was implemented using a time-series split with five folds. In this setup, validation sets always occur chronologically after the corresponding training subsets.
       
-      \subsection{Hyperparameter Tuning of XGBoost}
+      \subsection{Hyperparameter Tuning of XGBoost, RF, and LSTM}
       
-      XGBoost hyperparameters were optimized using grid search combined with time-series cross-validation. The following parameters were considered:
+      To tune the parameters of all three models, the basic grid search technique combined with time-series cross-validation is utilized on the train data. For example, for XGBoost, the following parameters were considered:
       \begin{itemize}
       	\item Number of trees ($n_{\textrm{estimators}}$)
       	\item Maximum tree depth ($\textrm{max\_depth}$)
@@ -111,7 +111,16 @@
       	\item Column subsampling ratio
       \end{itemize}
       
-      For each parameter combination, model performance was evaluated using the mean NSE across the five validation folds. The parameter set yielding the highest NSE was selected as optimal.
+      For each parameter combination, initially pre-defined,   model performance was evaluated using the mean NSE across the five validation folds. The parameter set yielding the highest NSE was selected as optimal.
+      
+      The following values of parameters are produced from the grid search:
+      \begin{itemize}
+      	\item RF: max\_depth: 30, max\_features: sqrt, min\_samples\_leaf: 1
+      	min\_samples\_split: 2, n\_estimators: 2000
+      	\item XGBoost:   colsample\_bytree: 0.8
+      	learning\_rate: 0.05, 	max\_depth: 4, n\_estimators: 600, subsample: 0.7 
+      	\item LSTM: units: 64, lr: 0.001, batch\_size: 16, epochs: 200,
+      \end{itemize}
       
       \subsection{One-Step-Ahead Forecasting and Bias Correction}
       
@@ -136,7 +145,7 @@
       	\item Performance evaluation using NSE, KGE, RMSE, and MAE
       \end{enumerate}
        
-       \subsection{Results}
+       \subsection{Results \& Discussion}
        
        \begin{table}[ht]
        	\centering
@@ -148,12 +157,12 @@
        		\textbf{Model} & \textbf{Dataset} & \textbf{RMSE} & \textbf{MAE} & \textbf{NSE} & \textbf{KGE} \\
        		\hline
        		\multirow{2}{*}{XGBoost} 
-       		& Training & 2.920 & 2.208 & 0.999 & 0.993 \\
+       		& Training & 2.920 & 2.208 & \textbf{0.999} & \textbf{0.993} \\
        		& Testing  & 64.680 & 48.029 & 0.589 & 0.589 \\
        		\hline
        		\multirow{2}{*}{Random Forest} 
        		& Training & 20.769 & 14.888 & 0.964 & 0.884 \\
-       		& Testing  & 64.500 & 47.169 & 0.591 & 0.591 \\
+       		& Testing  & 64.500 & 47.169 & \textbf{0.591} & \textbf{0.591} \\
        		\hline
        		\multirow{2}{*}{LSTM} 
        		& Training & 81.581 & 57.432 & 0.443 & 0.382 \\
@@ -188,13 +197,13 @@
       \end{figure}
       
  
-      \subsection{Feature Importance and Explainable Artificial Intelligence}
+      \section{Feature Importance and Explainable Artificial Intelligence}
       
       While predictive accuracy is essential, understanding the contribution of individual hydro-meteorological predictors is equally important for decision support and scientific insight. To this end, an Explainable Artificial Intelligence (XAI) analysis was conducted to assess the relative importance of input features and their influence on river discharge prediction.
       
       Given the heterogeneous nature of the evaluated models, different yet conceptually consistent feature importance approaches were employed. For the tree-based models (XGBoost and Random Forest), feature importance was derived from model-based importance measures, while for the LSTM model a permutation-based approach was adopted to ensure comparability across model classes.
       
-      \subsubsection{Permutation-Based Feature Importance}
+      \subsection{Permutation-Based Feature Importance}
       
       Permutation importance quantifies the contribution of a feature by measuring the decrease in model performance when the feature’s values are randomly permuted. Let $f$ denote a trained model and $\mathcal{M}(\cdot)$ a performance metric, here the Nash--Sutcliffe Efficiency (NSE). The importance of feature $x_j$ is computed as:
       \begin{equation}
@@ -208,12 +217,9 @@
       
       The analysis focused on the five most influential features for each model, ranked by their contribution to NSE reduction. Results indicate that lagged precipitation variables consistently dominate model predictions, particularly precipitation from the preceding one to three months. This finding is hydrologically meaningful, reflecting basin-scale storage effects and delayed runoff generation.
       
-      The autoregressive discharge term ($Q_{t-1}$) also emerges as a key predictor, highlighting the strong persistence of monthly river flow and confirming the importance of short-term memory in discharge dynamics. Temperature-related features exhibit comparatively lower but non-negligible influence, likely capturing seasonal snowmelt and evapotranspiration effects, especially for upstream stations such as Bjelašnica.
+      The autoregressive discharge term ($Q_{t-1}$) also emerges as a key predictor, highlighting the strong persistence of monthly river flow and confirming the importance of short-term memory in discharge dynamics. Temperature-related features exhibit comparatively equally important influence, especially \texttt{T\_bjelasnica}, likely capturing seasonal snowmelt and evapotranspiration effects, especially for upstream stations such as Bjelašnica.
       
-      Notably, feature importance rankings remain broadly consistent across XGBoost and Random Forest, suggesting stable hydro-climatic controls on discharge. In contrast, the LSTM model displays weaker and less structured importance patterns, consistent with its overall lower predictive performance.
-      
-      
-      The agreement between data-driven feature importance and established hydrological understanding provides confidence in the physical plausibility of the models. The dominance of lagged precipitation and discharge terms aligns with conceptual rainfall--runoff processes, while the secondary role of temperature reflects its indirect influence at monthly time scales.
+      Notably, feature importance rankings remain broadly consistent across XGBoost and Random Forest, especially the two most inflential features---\texttt{T\_bjelasnica} and the auto-regressive \texttt{Q\_lag1}---suggesting stable hydro-climatic controls on discharge. In contrast, the LSTM model displays weaker and less structured importance patterns, consistent with its overall lower predictive performance. The agreement between data-driven feature importance and established hydrological understanding provides confidence in the physical plausibility of the models. The dominance of lagged precipitation and discharge terms in both reasonably efficient models aligns with conceptual rainfall--runoff processes, while the secondary role of temperature in Bjelasnica reflects its indirect influence at monthly time scales.
       
       From an operational perspective, these results demonstrate that explainable machine learning techniques can support transparent and trustworthy discharge forecasting. By identifying the most influential predictors, the proposed framework enables both improved model diagnostics and enhanced interpretability for water resource management and decision-making.
       
@@ -228,7 +234,7 @@
       		(a) XGBoost,
       		(b) Random Forest,
       		and (c) LSTM.
-      		Bars indicate the decrease in Nash--Sutcliffe Efficiency (NSE) after feature permutation, while color denotes the direction of influence (positive or negative contribution to predicted discharge).}
+      		Bars indicate the decrease in Nash--Sutcliffe Efficiency (NSE) after feature permutation, while color denotes the direction of influence (positive (green) or negative (red) contribution to predicted discharge).}
       	\label{fig:feature_importance_xai}
       \end{figure}
       

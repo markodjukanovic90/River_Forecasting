@@ -5,20 +5,18 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Dataset Description}{1}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Feature Engineering and Lagged Variables}{1}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Performance Metrics}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.4.1}Nash--Sutcliffe Efficiency}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.4.2}Kling--Gupta Efficiency}{2}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Training, Validation, and Temporal Splitting}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Hyperparameter Tuning of XGBoost}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Hyperparameter Tuning of XGBoost, RF, and LSTM}{3}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.7}One-Step-Ahead Forecasting and Bias Correction}{3}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.8}Summary of the Computational Workflow}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.9}Results \& Discussion}{4}{}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Performance comparison of the evaluated models on training and testing data. RMSE and MAE are expressed in discharge units, while NSE and KGE are dimensionless.}}{4}{}\protected@file@percent }
 \newlabel{tab:model_performance}{{1}{4}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.9}Results}{4}{}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Observed versus predicted monthly river discharge during the testing period (2011--2020) for the evaluated models: (a) XGBoost, (b) Random Forest, and (c) LSTM. All predictions correspond to one-step-ahead forecasts after linear bias correction.}}{5}{}\protected@file@percent }
 \newlabel{fig:forecast_comparison}{{1}{5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.10}Feature Importance and Explainable Artificial Intelligence}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.10.1}Permutation-Based Feature Importance}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.10.2}Dominant Predictors of River Discharge}{6}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Direction and magnitude of the five most influential features identified through explainable artificial intelligence analysis: (a) XGBoost, (b) Random Forest, and (c) LSTM. Bars indicate the decrease in Nash--Sutcliffe Efficiency (NSE) after feature permutation, while color denotes the direction of influence (positive or negative contribution to predicted discharge).}}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Feature Importance and Explainable Artificial Intelligence}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Permutation-Based Feature Importance}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.1}Dominant Predictors of River Discharge}{6}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Direction and magnitude of the five most influential features identified through explainable artificial intelligence analysis: (a) XGBoost, (b) Random Forest, and (c) LSTM. Bars indicate the decrease in Nash--Sutcliffe Efficiency (NSE) after feature permutation, while color denotes the direction of influence (positive (green) or negative (red) contribution to predicted discharge).}}{7}{}\protected@file@percent }
 \newlabel{fig:feature_importance_xai}{{2}{7}}
 \gdef \@abspage@last{7}
