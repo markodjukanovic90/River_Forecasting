@@ -186,7 +186,7 @@ def run_xgboost_forecast_with_lags(df,
         x="importance", y="feature", data=fi_df,
         palette=["green" if d>0 else "red" for d in fi_df["direction"]]
     )
-    plt.title("Top 5 XGBoost Features – Size=Importance, Color=Direction")
+    plt.title("Top 5 XGBoost Features: Importance & Direction")
     plt.xlabel("Importance")
     plt.ylabel("Feature")
     plt.tight_layout()
@@ -200,7 +200,7 @@ def run_xgboost_forecast_with_lags(df,
     plt.plot(y_test.index, y_test.values, label="Observed", marker="o")
     plt.plot(y_test.index, y_pred, label="XGBoost raw", marker="x")
     plt.plot(y_test.index, y_pred_corr, label="XGBoost + Linear scaling", marker="s")
-    plt.title("Observed vs Predicted Monthly Flow – River Bosna")
+    plt.title("Observed vs Predicted Monthly Streamflow of BRB")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()

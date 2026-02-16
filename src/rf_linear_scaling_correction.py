@@ -126,19 +126,38 @@ def run_rf_forecast_with_lags(df, target_col="Q_proticaj",
     plt.plot(y_test.index, y_test.values, label="Observed", marker='o')
     plt.plot(y_test.index, y_pred, label="RF Raw", marker='x')
     plt.plot(y_test.index, y_pred_corr, label="RF + Linear-Scaling", marker='s')
-    plt.title("Observed vs Predicted Monthly Flow – River Bosna")
+    plt.title("Observed vs Predicted Monthly Streamflow of BRB")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("rf_forecast_test_period.png", dpi=300)
+    plt.savefig("prediction_rf.png", dpi=300)
     #plt.close()
 
     # Feature importance plot (top 5)
     imp = pd.Series(model.feature_importances_, index=X.columns)
     top_imp = imp.sort_values(ascending=True).tail(5)
+    
+    # Compute direction of influence (correlation with predictions)
+    directions = []
+    for f in top_imp.index:
+        corr = np.corrcoef(X_test[f], y_pred_corr)[0, 1]
+        directions.append(corr)
+    
+    #directions:
+    import seaborn as sns 
+    # Put into DataFrame
+    fi_df = pd.DataFrame({
+        "feature": top_imp.index,
+        "importance": top_imp.values,
+        "direction": directions
+    })
     plt.figure(figsize=(8,5))
-    top_imp.plot(kind="barh", color="skyblue")
-    plt.title("Top 5 Feature Importances: RandomForest")
+    #top_imp.plot(kind="barh", color="skyblue")
+    sns.barplot(
+        x="importance", y="feature", data=fi_df,
+        palette=["green" if d>0 else "red" for d in fi_df["direction"]]
+    )
+    plt.title("Top 5 Features: Importance & Direction")
     plt.xlabel("Importance")
     plt.ylabel("Feature")
     plt.tight_layout()

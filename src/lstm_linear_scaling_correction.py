@@ -192,11 +192,11 @@ def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
     plt.plot(test_dates, y_test, label="Observed", marker='o')
     plt.plot(test_dates, y_pred, label="LSTM Raw", marker='x')
     plt.plot(test_dates, y_pred_corr, label="LSTM + Linear-Scaling", marker='s')
-    plt.title("Observed vs Predicted Monthly Flow – River Bosna")
+    plt.title("Observed vs Predicted Monthly Streamflow of BRB")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("lstm_forecast_test_period.png", dpi=300)
+    plt.savefig("prediction_lstm.png", dpi=300)
     plt.close()
 
     # feature importance using permutation importance
@@ -219,7 +219,7 @@ def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
     )
 
     # --- Keep only top 5 most influential features
-    fi = fi.sort_values("importance", ascending=False).head(5).copy()
+    fi = fi.sort_values("importance", ascending=True).tail(5).copy()
 
     # -----------------------------------------------------
     # Compute DIRECTION of influence
@@ -260,8 +260,8 @@ def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
     )
 
     plt.gca().invert_yaxis()
-    plt.xlabel("NSE decrease after permutation")
-    plt.title("Top-5 Features: LSTM ")
+    plt.xlabel("NSE decrease after permutation")  
+    plt.title("Top 5 Features: Importance & Direction")
     plt.grid(True, axis="x")
     plt.tight_layout()
     plt.savefig("feature_importance_lstm.png", dpi=300)

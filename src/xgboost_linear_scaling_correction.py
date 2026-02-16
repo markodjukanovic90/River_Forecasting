@@ -179,6 +179,18 @@ def run_xgboost_with_linear_scaling(df, target_col="Q_proticaj", max_train_year=
         raise ValueError("DataFrame must have a DatetimeIndex or a 'date' column")
 
     df = df.sort_index()
+    
+    # -------------------------------------------------
+    # 1) Add lag features
+    # -------------------------------------------------
+    df = add_lag_features(df,
+                          lags_P=[1,2,3],
+                          lags_T=[1,2],
+                          lag_Q=1)
+
+    # Drop rows with missing lags
+    df = df.dropna()
+
 
     # 1) Feature/target
     X = df.drop(columns=[target_col])
@@ -198,8 +210,8 @@ def run_xgboost_with_linear_scaling(df, target_col="Q_proticaj", max_train_year=
     model = XGBRegressor(
         n_estimators=600,
         max_depth=4,
-        learning_rate=0.03,
-        subsample=0.8,
+        learning_rate=0.05,
+        subsample=0.7,
         colsample_bytree=0.8,
         objective="reg:squarederror",
         random_state=42
@@ -236,20 +248,42 @@ def run_xgboost_with_linear_scaling(df, target_col="Q_proticaj", max_train_year=
     plt.plot(y_test.index, y_test.values, label="Observed", marker='o')
     plt.plot(y_test.index, y_pred, label="XGBoost Raw", marker='x')
     plt.plot(y_test.index, y_pred_corrected, label="XGBoost + Linear-Scaling", marker='s')
-    plt.title("Observed vs Predicted Monthly Flow: River Bosna")
+    plt.title("Observed vs Predicted Monthly Streamflow of BRB")
     plt.xlabel("Date")
     plt.ylabel("Flow (m³/s)")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.show()
+    plt.savefig("prediction_xgboost.png", dpi=300)
 
     # Feature importance plot (top 5)
+    import seaborn as sns
     imp = pd.Series(model.feature_importances_, index=X.columns)
+    print(imp)
     top_imp = imp.sort_values(ascending=True).tail(5)
+    
+    # Compute direction of influence (correlation with predictions)
+    directions = []
+    for f in top_imp.index:
+        corr = np.corrcoef(X_test[f], y_pred_corrected)[0, 1]
+        directions.append(corr)
+    
+    #directions:
+    
+    # Put into DataFrame
+    fi_df = pd.DataFrame({
+        "feature": top_imp.index,
+        "importance": top_imp.values,
+        "direction": directions
+    })
     plt.figure(figsize=(8,5))
-    top_imp.plot(kind="barh", color="skyblue")
-    plt.title("Top 5 Feature Importances: XGBoost")
+    sns.barplot(
+        x="importance", y="feature", data=fi_df,
+        palette=["green" if d>0 else "red" for d in fi_df["direction"]]
+    )
+    
+    #top_imp.plot(kind="barh", color="skyblue")
+    plt.title("Top 5 Features: Importance & Direction")
     plt.xlabel("Importance")
     plt.ylabel("Feature")
     plt.tight_layout()
@@ -317,4 +351,4 @@ df_merged = reduce(
 )
 print(df_merged)
 
-y_pred_corr, metrics = run_xgboost_forecast_with_lags(df_merged)    #run_xgboost_with_linear_scaling(df_merged)
+y_pred_corr, metrics = run_xgboost_with_linear_scaling(df_merged)  #run_xgboost_forecast_with_lags(df_merged)    run_xgboost_with_linear_scaling(df_merged)
