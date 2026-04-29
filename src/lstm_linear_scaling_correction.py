@@ -198,7 +198,58 @@ def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
     plt.tight_layout()
     plt.savefig("prediction_lstm.png", dpi=300)
     plt.close()
+    
 
+    # =====================================================
+    # SCATTER PLOT: Observed vs Predicted (XGBOOST)
+    # =====================================================
+
+    plt.figure(figsize=(6,6))
+
+    # Observed vs predicted
+    plt.scatter(y_test.values, y_pred_corr, alpha=0.7, color="blue", label="Samples")
+
+    # 1:1 reference line
+    min_val = min(y_test.min(), y_pred_corr.min())
+    max_val = max(y_test.max(), y_pred_corr.max())
+
+    plt.plot([min_val, max_val], [min_val, max_val], 'k--', label="1:1 line")
+
+    # Regression line (fit)
+    coef = np.polyfit(y_test.values, y_pred_corr, 1)
+    poly_fn = np.poly1d(coef)
+
+    sorted_idx = np.argsort(y_test.values)
+    plt.plot(
+        np.array(y_test.values)[sorted_idx],
+        poly_fn(np.array(y_test.values)[sorted_idx]),
+        color="red",
+        linewidth=2,
+        label="Fit line"
+    )
+
+    # Labels
+    plt.xlabel("Observed Streamflow (m³/s)")
+    plt.ylabel("Predicted Streamflow (m³/s)")
+    plt.title("Observed vs Predicted (LSTM)")
+
+    # Metrics annotation
+    plt.text(
+        0.05, 0.95,
+        f"NSE = {metrics['NSE']:.3f}\nRMSE = {metrics['RMSE']:.2f}\nMAE = {metrics['MAE']:.2f}",
+        transform=plt.gca().transAxes,
+        verticalalignment='top',
+        bbox=dict(facecolor='white', alpha=0.7)
+    )
+
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+
+    plt.savefig("scatter_lstm.png", dpi=300)
+    plt.close()
+    
+    '''
     # feature importance using permutation importance
     
 
@@ -266,7 +317,8 @@ def run_lstm_forecast_with_lags(df, target_col="Q_proticaj",
     plt.tight_layout()
     plt.savefig("feature_importance_lstm.png", dpi=300)
     plt.close()
-
+    '''
+    
     return y_pred_corr, metrics
 
 
