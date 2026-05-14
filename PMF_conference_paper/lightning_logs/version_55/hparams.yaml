@@ -1,0 +1,155 @@
+backcast_loss_ratio: 0.1
+context_length: 12
+dataset_parameters:
+  add_encoder_length: false
+  add_relative_time_idx: false
+  add_target_scales: false
+  allow_missing_timesteps: false
+  categorical_encoders:
+    __group_id__group: !!python/object:pytorch_forecasting.data.encoders.NaNLabelEncoder
+      add_nan: false
+      classes_:
+        ? !!python/object/apply:numpy.core.multiarray.scalar
+        - &id001 !!python/object/apply:numpy.dtype
+          args:
+          - i8
+          - false
+          - true
+          state: !!python/tuple
+          - 3
+          - <
+          - null
+          - null
+          - null
+          - -1
+          - -1
+          - 0
+        - !!binary |
+          AAAAAAAAAAA=
+        : 0
+      classes_vector_: !!python/object/apply:numpy.core.multiarray._reconstruct
+        args:
+        - &id002 !!python/name:numpy.ndarray ''
+        - !!python/tuple
+          - 0
+        - !!binary |
+          Yg==
+        state: !!python/tuple
+        - 1
+        - !!python/tuple
+          - 1
+        - *id001
+        - false
+        - !!binary |
+          AAAAAAAAAAA=
+      warn: true
+    group: !!python/object:pytorch_forecasting.data.encoders.NaNLabelEncoder
+      add_nan: false
+      classes_:
+        ? !!python/object/apply:numpy.core.multiarray.scalar
+        - *id001
+        - !!binary |
+          AAAAAAAAAAA=
+        : 0
+      classes_vector_: !!python/object/apply:numpy.core.multiarray._reconstruct
+        args:
+        - *id002
+        - !!python/tuple
+          - 0
+        - !!binary |
+          Yg==
+        state: !!python/tuple
+        - 1
+        - !!python/tuple
+          - 1
+        - *id001
+        - false
+        - !!binary |
+          AAAAAAAAAAA=
+      warn: true
+  constant_fill_strategy: null
+  group_ids:
+  - group
+  lags: null
+  max_encoder_length: 12
+  max_prediction_length: 1
+  min_encoder_length: 12
+  min_prediction_idx: 0
+  min_prediction_length: 1
+  predict_mode: false
+  randomize_length: null
+  scalers: {}
+  static_categoricals: null
+  static_reals: null
+  target: flow_log
+  target_normalizer: &id004 !!python/object:pytorch_forecasting.data.encoders.GroupNormalizer
+    _groups: []
+    _method_kwargs: {}
+    center: true
+    groups: null
+    method: standard
+    method_kwargs: {}
+    norm_:
+      center: !!python/object/apply:numpy.core.multiarray.scalar
+      - &id003 !!python/object/apply:numpy.dtype
+        args:
+        - f8
+        - false
+        - true
+        state: !!python/tuple
+        - 3
+        - <
+        - null
+        - null
+        - null
+        - -1
+        - -1
+        - 0
+      - !!binary |
+        OvnhCPhNEUA=
+      scale: !!python/object/apply:numpy.core.multiarray.scalar
+      - *id003
+      - !!binary |
+        kYTVQm6J5D8=
+    scale_by_group: false
+    transformation: relu
+  time_idx: time_idx
+  time_varying_known_categoricals: null
+  time_varying_known_reals: null
+  time_varying_unknown_categoricals: null
+  time_varying_unknown_reals:
+  - flow_log
+  variable_groups: null
+  weight: null
+dropout: 0.1
+expansion_coefficient_lengths:
+- 3
+- 7
+learning_rate: 0.001
+log_gradient_flow: false
+log_interval: -1
+log_val_interval: -1
+monotone_constraints: {}
+num_block_layers:
+- 3
+- 3
+num_blocks:
+- 3
+- 3
+optimizer: adam
+optimizer_params: null
+output_transformer: *id004
+prediction_length: 1
+reduce_on_plateau_min_lr: 1.0e-05
+reduce_on_plateau_patience: 1000
+reduce_on_plateau_reduction: 2.0
+sharing:
+- true
+- true
+stack_types:
+- trend
+- seasonality
+weight_decay: 0.001
+widths:
+- 32
+- 64
