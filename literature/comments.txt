@@ -1,0 +1,12 @@
+The dataset
+was split into 80% for training and 20% for testing to ensure a reliable assessment of model
+performance. The LSTM model was built using the Keras package, a high-level neural
+network API written in Python 3.13. The model architecture and hyperparameters were op-
+timized through a process of trial and error, where different configurations were evaluated
+to determine the optimal setup. The final model architecture consisted of a single LSTM
+layer with four units, followed by a dense output layer.
+
+Tuning LSTM: a single LSTM layer with 4 units, carefully chosen to balance model complexity and per-
+formance. The number of epochs and batch sizes for training were determined based on
+the results of the evaluation metrics. Epoch values of 16, 32, 64 and 128 were tested, and
+batch sizes ranged from 1 to 50

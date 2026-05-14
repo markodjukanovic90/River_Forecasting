@@ -1,0 +1,10 @@
+What are the main findings?
+
+• Random Forest and XGBoost outperformed LSTM in monthly streamflow prediction.
+• Random Forest shows the most robust generalization on test data.
+• The dominance of lagged precipitation and streamflow reflects basin memory effects.
+
+What are the implications of the main findings?
+    • Tree-based ML models appeared to be most suitable for monthly streamflow forecasting in data-limited basins.
+    • Explainable AI validates the physical relevance of main hydro-climatic determinants of streamflow.
+    • Reliable ML-based forecasts can support national water management in Bosnia and Herzegovina.

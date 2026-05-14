@@ -1,0 +1,52 @@
+XGBOOST parameters:
+
+Best CV NSE: 0.7361268777103086
+Best parameters:
+  colsample_bytree: 0.8
+  learning_rate: 0.05
+  max_depth: 4
+  n_estimators: 600
+  subsample: 0.7
+
+Linear scaling: a=1.007, b=-1.169
+
+FORECAST METRICS (test period)
+RMSE: 64.680
+MAE: 48.029
+NSE: 0.589
+KGE: 0.589
+---------------------------------------------------
+
+RF parameters:
+
+
+Best CV NSE: 0.6436169988362228
+Best parameters:
+  max_depth: 30
+  max_features: sqrt
+  min_samples_leaf: 1
+  min_samples_split: 2
+  n_estimators: 2000
+
+Linear scaling: a=1.131, b=-22.353
+
+FORECAST METRICS (test period)
+RMSE: 66.426
+MAE: 50.464
+NSE: 0.566
+KGE: 0.533
+
+
+-----------------------------------------------------------------
+
+LSTM
+
+{'units': 64.0, 'lr': 0.001, 'batch_size': 16.0, 'epochs': 200.0, 'NSE': -0.24096352023289008}
+FORECAST METRICS (1-step ahead)
+RMSE: 75.958
+MAE: 56.110
+NSE: 0.432
+KGE: 0.478
+
+
+
