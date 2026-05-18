@@ -247,7 +247,7 @@ def run_xgboost_with_linear_scaling(df, target_col="Q_proticaj", max_train_year=
     plt.figure(figsize=(10,5))
     plt.plot(y_test.index, y_test.values, label="Observed", marker='o')
     plt.plot(y_test.index, y_pred, label="XGBoost Raw", marker='x')
-    plt.plot(y_test.index, y_pred_corrected, label="XGBoost + Linear-Scaling", marker='s')
+    plt.plot(y_test.index, y_pred_corrected, label="XGBoost + Linear-Scaling", marker='s', linestyle='--', alpha=0.5)
     plt.title("Observed vs Predicted Monthly Streamflow of BRB")
     plt.xlabel("Date")
     plt.ylabel("Flow (m³/s)")

@@ -1,0 +1,12 @@
+TITLE: Machine Learning Approaches for Extreme Streamflow Forecasting in the Bosna River Basin
+
+
+-----------------------------------------------------------------------------------------------------
+
+Content: Accurate prediction of river flow extremes is essential for flood-risk management, hydropower planning, ecological preservation, and sustainable water-resource management. In this study, we investigate monthly river flow forecasting for the River Bosna Basin using historical hydrological observations collected over multiple decades, consisting of monthly discharge measurements transformed into a structured time-series representation with seasonal indicators and lag-based temporal features. To improve robustness and reduce skewness in the hydrological signal, preprocessing steps included missing-value handling, seasonal encoding, and logarithmic target transformation are employed.
+
+Several machine learning approaches were evaluated for long-term streamflow prediction, including Random Forest (RF), Extreme Gradient Boosting (XGBoost), and a hybrid Convolutional Neural Network–Gated Recurrent Unit (CNN-GRU) architecture. All models were trained and evaluated under a consistent experimental protocol using sliding-window forecasting and chronological train/test splitting. Model performance was assessed using classical RMSE, MAE, and Nash–Sutcliffe Efficiency (NSE), which is widely used in hydrological forecasting.
+
+The experimental results demonstrate that deep temporal architectures provide competitive predictive capability for complex hydrological dynamics. The CNN-GRU model achieved the best generalization performance with a test NSE average of 0.48, outperforming XGBoost (0.44) and RF in terms of predictive stability on unseen data. Although RF and XGBoost achieved stronger training performance, they exhibited larger generalization gaps, indicating a higher degree of overfitting. The obtained results confirm that hybrid deep learning approaches combining convolutional feature extraction with recurrent temporal modeling are promising for river-flow forecasting problems characterized by nonlinear and seasonal dependencies.
+
+The study highlights the practical value of advanced AI-driven forecasting systems for hydrological prediction and supports further exploration of attention mechanisms, transformer-based, and hybrid residual-learning strategies for improving predictive accuracy in environmental modeling tasks.
