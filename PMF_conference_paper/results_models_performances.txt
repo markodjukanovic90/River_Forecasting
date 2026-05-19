@@ -1,0 +1,98 @@
+
+
+config_XGB = {
+    'n_estimators': 500,
+    'max_depth':  3,
+    'learning_rate':  0.01,
+    'subsample': 0.8,
+    'colsample_bytree':  0.7
+}
+
+
+==============================
+Q_MIN - XGBoost TRAIN
+==============================
+RMSE: 29.30
+MAE : 20.39
+NSE : 0.7570
+
+==============================
+Q_MIN - XGBoost TEST
+==============================
+RMSE: 26.09
+MAE : 18.62
+NSE : 0.4401
+
+
+
+======================================================================================================================================
+
+
+config_RF = {'n_estimators': 500, 'min_samples_split': 5, 'min_samples_leaf': 1, 'max_features': 0.6, 'max_depth': 8}
+
+==============================
+Q_MIN - RF TRAIN
+==============================
+RMSE: 23.37
+MAE : 15.80
+NSE : 0.8454
+
+==============================
+Q_MIN - RF TEST
+==============================
+RMSE: 26.56
+MAE : 19.72
+NSE : 0.4198
+
+
+======================================================================================================================================
+Sequential CNN model give by:
+        Conv1D(
+            64,
+            kernel_size=3,
+            padding='same',
+            activation='relu',
+            kernel_regularizer=regularizers.l2(1e-4)
+        ),
+
+        MaxPooling1D(2),
+
+        Dropout(0.1),
+
+        GRU(
+            64,
+            return_sequences=False,
+            dropout=0.2,
+            recurrent_dropout=0.1,
+            kernel_regularizer=regularizers.l2(1e-4)
+        ),
+        #Dense(32, activation='relu'), #added this ??
+        Dropout(0.1),
+        Dense(1)
+    ])
+
+    model.compile(
+        optimizer='adam',
+        #loss=rmse_loss,#nse_loss,
+        loss = tf.keras.losses.Huber(), 
+        metrics=[nse_metric]
+    )
+    
+    
+
+CNN-GRU TRAIN PERFORMANCE
+==============================
+CNN-GRU TRAIN PERFORMANCE
+==============================
+RMSE: 40.64
+MAE : 27.78
+NSE : 0.5326
+
+==============================
+CNN-GRU TEST PERFORMANCE
+==============================
+RMSE: 25.22
+MAE : 17.69
+NSE : 0.4768
+
+
